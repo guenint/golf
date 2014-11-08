@@ -10,18 +10,28 @@
 //prototype functions
 turn(char direction, int time);
 fire(int power);
+parse_analog_left(void);
+analog_input_left(void);
+parse_analog_right(void);
+analog_input_right(void);
 init(void);
-enable_timer(void);
-analog_input(void);
 //enable ADC functionality
 
 volatile int OCR0A = TIMER_MAX;
 volatile int OCR0B = 0x00;
+volatile int val_left = 0;
+volatile int val_right = 0;
 
 
 int main(void){
     //take in ADC values and initialize timer
     init();
+    while(1) 
+    {
+        if(val_left > val_right) {
+        //    turn('r', )
+        }
+    }
     //lots of if statements...
     //call turn() based on ADC values
     //threshold to prevent shaking around target
@@ -29,6 +39,18 @@ int main(void){
     //figure out the power from distance... ADC value after the comparing stage
     
     //fire that shit
+
+
+    /*
+    first, have three
+    if left one is sensing more than the right, turn to the left
+    if right one is sensing more than the left, turn to the right
+    only stop when the one over the solenoid is very hot
+
+    then in fire, 
+    charge time for specific distance
+
+    */
 }
 
 void init(void)
@@ -37,11 +59,36 @@ void init(void)
     set(DDRB, 6);
     //runs method analog_input below
     analog_input();
-    //runs method enable_timer below
-    enable_timer();
+
 }
 
-void analog_input(void)
+int parse_analog_left(void)
+{
+    //run every time, sets conversion
+    set(ADCSRA, ADSC);
+    while(1)
+    {
+        if(check(ADCSRA, ADIF))
+        {
+            //flag set to reset
+            set(ADCSRA, ADIF);
+            val_left = ADC;
+            return ADC;
+        }
+    }
+}
+int parse_analog_right(void) {
+    //set up alternate analog timer
+}
+
+// need analog input for other pin for right
+void analog_input_right(void) {
+
+}
+
+
+//analog input for phototransistor LEFT = F0
+void analog_input_left(void)
 {
     // hardware settings
     m_disableJTAG();
@@ -65,7 +112,7 @@ void analog_input(void)
     // Disable ADC system
     clear(ADCSRA, ADEN);
     
-    //F0 input for timer
+    //F0 input FOR LEFT
     clear(ADCSRB, MUX5);
     clear(ADMUX, MUX2);
     clear(ADMUX, MUX1);
@@ -78,26 +125,6 @@ void analog_input(void)
     set(ADCSRA, ADSC);
 }
 
-void enable_timer(void)
-{
-    // timer values
-    OCR0A = TIMER_MAX;
-    OCR0B = 0x00;
-
-    // Sets the timer mode: OCR0A register
-    set(TCCR0B, WGM02);
-    set(TCCR0A, WGM01);
-    set(TCCR0A, WGM00);
-
-    //compare B7
-    set(TCCR0A, COM0B1);
-    clear(TCCR0A, COM0B0);
-
-    // clockdivide
-    set(TCCR0B, CS02);
-    clear(TCCR0B, CS01);
-    set(TCCR0B, CS00);
-}
 
 
 //motor turn function
